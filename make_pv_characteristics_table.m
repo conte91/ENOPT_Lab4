@@ -40,4 +40,5 @@ surf(Ppv_to_Ipv(:,:,1), Ppv_to_Ipv(:,:,2), Ppv_to_Ipv(:,:,3))
 xlabel('Irradiance (W/m2)');
 ylabel('Power (W)');
 zlabel('Current (A)');
+Ppv_to_Ipv=[Ppv_to_Ipv(:,:,2) Ppv_to_Ipv(:,:,3)];
 %axis([min(min(Ppv_to_Ipv(:,:,1))), max(max(Ppv_to_Ipv(:,:,1))),min(min(Ppv_to_Ipv(:,:,2))), max(max(Ppv_to_Ipv(:,:,2))),min(min(Ppv_to_Ipv(:,:,3))), max(max(Ppv_to_Ipv(:,:,3)))]);
