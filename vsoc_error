@@ -1,0 +1,6 @@
+function vocerror=vsoc_error(b, x, y)
+  vsoc=x;
+  voc=b(1)*(e.^(b(2)*vsoc))+b(3)*vsoc.^4+b(4)*vsoc.^3+b(5)*vsoc.^2+b(6)*vsoc+b(7);
+  diff=y-voc;
+  vocerror=sum(diff.^2);
+end
