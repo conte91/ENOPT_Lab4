@@ -54,7 +54,8 @@ end
 %Interpolate equation for VSoc
 x=[min(Rs(:,1)):0.001:max(Rs(:,1))];
 p0=[1 1 1 1 1 1 1];
-p=fminsearch('vsoc_error', p0, [], [], Rs(:,1), Rs(:,3));
+handle=@(b) vsoc_error(b, Rs(:,1), Rs(:,3));
+p=fminsearch(handle, p0);
 p1=p;
 x=[min(Rs(:,1)):0.001:max(Rs(:,1))];
 y=feval('vsoc2voc', p, x);
@@ -67,7 +68,8 @@ ylabel('VSOC', 'FontName', 'DejaVu', 'FontSize', 12);
 %Interpolate equation for R
 x=[min(Rs(:,1)):0.001:max(Rs(:,1))];
 p0=[1 1 1];
-p=fmins('r_error', p0, [], [], Rs(:,1), Rs(:,2));
+handle=@(b) r_error(b, Rs(:,1), Rs(:,2));
+p=fminsearch(handle, p0);
 p2=p;
 x=[min(Rs(:,1)):0.001:max(Rs(:,1))];
 y=feval('vsoc2r', p, x);
@@ -76,3 +78,7 @@ plot(x, y, Rs(:,1), Rs(:,2));
 title('Measured vs. fitted R curve', 'Fontname', 'DejaVu', 'FontSize', 16);
 xlabel('Normalized charge', 'FontName', 'DejaVu', 'FontSize', 12);
 ylabel('R', 'FontName', 'DejaVu', 'FontSize', 12);
+
+b1=p1;
+b2=p2;
+b=[b1 b2];
