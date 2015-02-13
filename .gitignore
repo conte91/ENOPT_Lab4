@@ -1,3 +1,7 @@
 *.pdf
 *.jpg
 solar.m
+*~
+*.swp
+*.aux
+lyx_tmpdir*/

@@ -1,3 +1,4 @@
+startSOC=0.5;
 upper_current=0.145;
 lower_current=1.440;
 

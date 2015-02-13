@@ -1,0 +1,54 @@
+\section{Simulation of the system}
+All the previous results have been used to simulate the system with SimuLink.
+
+The SimuLink model consists of:
+\begin{itemize}
+\item The photovoltaic module (\emph{PV\_module}): it is composed by a grid of $WxH$ cells, each corresponding to the model we obtained previously. It receives a power request from its load (the DC-DC converter) and outputs a current and a voltage depending on the current irradiation.
+\item The DC-DC converter model receives a $(I,V)$ request from its load (driven by the current controller) and generates a power request to the photovoltaic module based on its efficiency. 
+\item The battery model receives a current request from the load and gives it the requested current, changing its SoC and its $V$. The latter is the same voltage that the converter will be requested to provide to the load. In case that the photovoltaic module itself is capable of providing more current that the needed one, the remaining current can be fed to the battery to recharge it (i.e. the current controller can give a negative $I$ to the battery).
+\item Finally, the current controller is responsible of requesting to the battery and the photovoltaic model the right quantity of current.
+\end{itemize}
+
+The first three modules have been fully characterized in the previous parts, and thus the behavioural equations have been put into the corresponding parts of the model.
+
+However, for the latter module, a good policy needed to be implemented. A greedy strategy has been chosen, in which the photovoltaic model is given precedence over the battery, as this means simpler hardware and a good result. Also, by giving full precedence to the photovoltaic module, the self-recharge effect of the battery can be exploited at its maximum - although this effect is not modeled into the SimuLink model.
+
+Regarding the battery model, it should be noticed how the first implementation, which simply integrated the input current over time, didn't use a saturating integrator, thus letting the battery recharge over the 100\% SoC. This has been fixed by saturating the integration down to the initial SoC and up to $1-SoC(0)$.
+
+\subsection{Implementation of a as-most-as-possible current controller}
+In order to drive current requests to the photovoltaic panel, a good implementation of a current controller has been needed. Its task is to compute the best current request for the PV module knowing only the current irradiation value and the load's current request.
+
+The chosen strategy has been to try to ask always for the most available current from the PV module. This lets the panel exploit its full potential, and lets the battery recharge if it can be done. An analisys of the circuit structure can help to achieve this result.
+
+As the PV is connected to a DC-DC converter \emph{before} entering the load, the output current available to the load does not rely of having the curresponding right voltage from the panel. This means that, in order to maximize the avilable current $I_{out}$, the PV module must be used as much as possible near to its \emph{Maximum power point} ($M$). It is important, although, not trying to pass this power limit, as the PV module will not be able to deliver it, making the SimuLink model not work (in the simulation case) or drastically decreasing the output power (in the real case).
+
+Considering the equations modeling the DC-DC converter, we get the following relationships:
+
+\begin{align*}
+  \eta I_{pv}V_{pv} &= I_{out}V_{out} \\
+                    &\Updownarrow \\
+  \eta P_{pv} &= P_{out} \\
+                    &\Updownarrow \\
+  P_{pv}&=P_{out}+P_{loss}  \\
+\end{align*}
+
+By choosing the maximum power point $M(G)$ for as $P_{pv}$ (which has been implemented as a LUT and then suitably scaled by a security factor 0.95 - in order to be sure never to pass it because of approximation errors of the fitting functions and LUTs), we obtain:
+\begin{align*}
+  M(G)&=V_{out}I_{req}+P_{loss}(I_{req}) \\
+\end{align*}
+
+Here, $V_{out}$ is the voltage of the battery, which depends on its SoC. Not knowing it into the block, (as this would cause an algebraic loop and complicate a lot the computation) it has been chosen to be the worst-case one, corresponding to the voltage of the fully-charged battery, $V=4.2 [V]$. This conservative approach ensures that the computed maximum current will always be output by the panel without problems.
+
+As the power loss has been previously modeled as $P_{loss}(I_{req})=c_1I_{req}^2+c_2I_{req}+c_3$, the output current corresponding to the maximum power point can be computed as follows:
+
+\begin{align*}
+  M(G)&=VI_{req}+c_1I_{req}^2+c_2I_{req}+c_3 \\
+  c_1I_{req}^2+(c_2+V) I_{req} + (c_3)-M(G) &= 0 \\
+  I_{req} &= \frac{ -(c_2+V) + \sqrt{ (c_2+V)^2-4c_1(c_3 -M(G) )} }{2 c_1} \\
+\end{align*}
+
+Using this expression as a function block for computing the requested current ensures that the maximum power is always extracted from the PV module, by taking also into account the non-idealities of the DC-DC module.
+
+
+
+
